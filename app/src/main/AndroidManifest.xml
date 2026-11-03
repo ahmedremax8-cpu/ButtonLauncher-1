@@ -27,7 +27,9 @@
 
     <application
         android:allowBackup="true"
-        android:label="Button Launcher">
+        android:label="Button Launcher"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round">
 
         <!-- Main Launcher Activity (Fullscreen, status bar completely hidden) -->
         <activity
@@ -41,6 +43,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 

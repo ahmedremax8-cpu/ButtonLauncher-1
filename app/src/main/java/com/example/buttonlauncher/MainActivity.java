@@ -41,7 +41,6 @@ public class MainActivity extends Activity {
     private LinearLayout countdownBox;
     private TextView countdownTitleView, countdownDaysView, countdownProgressView, countdownBarView;
     private LinearLayout listBox;
-    private TextView hintView;
 
     private final List<TextView> rows = new ArrayList<TextView>();
     private final List<String> pkgs = new ArrayList<String>();
@@ -219,10 +218,6 @@ public class MainActivity extends Activity {
             countdownBarView.setTextColor(colorAccent);
             countdownBarView.setTextSize((int)(10 * fontScale));
         }
-        if (hintView != null) {
-            hintView.setTextColor(colorSecondary);
-            hintView.setTextSize((int)(10 * fontScale));
-        }
     }
 
     private void applyCardBg(LinearLayout box, int bgCol) {
@@ -344,12 +339,6 @@ public class MainActivity extends Activity {
         listBox = new LinearLayout(this);
         listBox.setOrientation(LinearLayout.VERTICAL);
 
-        // 4. Hint footer
-        hintView = text(isSmallScreen ? 9 : 10, colorSecondary, Typeface.MONOSPACE);
-        hintView.setGravity(Gravity.CENTER);
-        hintView.setPadding(0, dp(10), 0, dp(6));
-        hintView.setText("💡 اضغط مرتين على زر خفض الصوت لفك/قفل اللمس | اضغط مطولاً للإعدادات");
-
         reorderWidgets();
 
         ScrollView outerScroll = new ScrollView(this);
@@ -367,7 +356,6 @@ public class MainActivity extends Activity {
         rootLayout.removeView(prayerBox);
         rootLayout.removeView(countdownBox);
         rootLayout.removeView(listBox);
-        rootLayout.removeView(hintView);
 
         if ("top".equals(prayerPosition)) rootLayout.addView(prayerBox);
         if ("top".equals(vacationPosition)) rootLayout.addView(countdownBox);
@@ -376,8 +364,6 @@ public class MainActivity extends Activity {
 
         if ("bottom".equals(prayerPosition)) rootLayout.addView(prayerBox);
         if ("bottom".equals(vacationPosition)) rootLayout.addView(countdownBox);
-
-        rootLayout.addView(hintView);
     }
 
     private TextView text(int sizeSp, int color, Typeface tf) {
