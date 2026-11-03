@@ -13,14 +13,20 @@ jobs:
     - name: Checkout Source Code
       uses: actions/checkout@v4
 
+    - name: Unzip project automatically
+      run: |
+        if [ -f "ButtonLauncher_Updated.zip" ]; then
+          unzip -o ButtonLauncher_Updated.zip
+        fi
+        if [ -f "ButtonLauncher.zip" ]; then
+          unzip -o ButtonLauncher.zip
+        fi
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
-
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
@@ -28,7 +34,9 @@ jobs:
         gradle-version: '7.5'
 
     - name: Build Debug APK
-      run: gradle assembleDebug --stacktrace
+      run: |
+        chmod +x gradlew || true
+        gradle assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
