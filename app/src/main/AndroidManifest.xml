@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.buttonlauncher">
+
+    <!-- Supports small 2.8", 3.0" screens (Qin F21 Pro, Cat S22 Flip, Jelly 2) up to large modern screens -->
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true"
+        android:resizeable="true"
+        android:requiresSmallestWidthDp="240" />
+
+    <!-- Query all packages for Android 11+ -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- Contacts & Phone Calls -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- Audio Files Storage for Music Player -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- GPS Location for accurate Prayer Times calculation -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Button Launcher">
+
+        <!-- Main Launcher Activity (Fullscreen, status bar completely hidden) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Built-in Phone & Contacts -->
+        <activity
+            android:name=".SimplePhoneActivity"
+            android:exported="false"
+            android:label="Phone"
+            android:theme="@android:style/Theme.Holo.NoActionBar" />
+
+        <!-- Built-in Music Player -->
+        <activity
+            android:name=".SimpleMusicActivity"
+            android:exported="false"
+            android:label="Music Player"
+            android:theme="@android:style/Theme.Holo.NoActionBar" />
+
+        <!-- Launcher Settings -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="Launcher Settings"
+            android:theme="@android:style/Theme.Holo" />
+    </application>
+</manifest>
