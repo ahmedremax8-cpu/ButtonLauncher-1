@@ -79,9 +79,23 @@ public class SettingsActivity extends Activity {
         int pad = dp(16);
         content.setPadding(pad, pad, pad, pad);
 
+        // Quick button to reopen Setup Wizard & Permissions
+        Button btnWizard = new Button(this);
+        btnWizard.setText("🔄 تشغيل معالج الإعداد الأولي والصلاحيات (Setup Wizard)");
+        btnWizard.setBackgroundColor(0xFF2563EB);
+        btnWizard.setTextColor(android.graphics.Color.WHITE);
+        btnWizard.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(SettingsActivity.this, SetupWizardActivity.class));
+            }
+        });
+        content.addView(btnWizard);
+
         // 1. Color Themes
         TextView hTheme = new TextView(this);
         hTheme.setText("--- ثيم الألوان والمظهر المينيمالي ---");
+        hTheme.setPadding(0, dp(12), 0, 0);
         hTheme.setTextSize(14);
         content.addView(hTheme);
 

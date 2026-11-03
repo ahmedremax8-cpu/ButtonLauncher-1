@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
@@ -20,6 +21,7 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,11 +34,15 @@ import java.util.Locale;
 public class MainActivity extends Activity {
 
     private LinearLayout rootLayout;
-    private TextView dateView, timeView, batteryView, hintView;
+    private TextView userBadgeView, focusBadgeView;
+    private TextView dateView, timeView, batteryView;
+    private LinearLayout prayerBox;
+    private TextView prayerNextView, prayerScheduleView;
     private LinearLayout countdownBox;
-    private TextView countdownTitleView, countdownDaysView, countdownProgressView;
-    private TextView prayerWidgetView;
+    private TextView countdownTitleView, countdownDaysView, countdownProgressView, countdownBarView;
     private LinearLayout listBox;
+    private TextView hintView;
+
     private final List<TextView> rows = new ArrayList<TextView>();
     private final List<String> pkgs = new ArrayList<String>();
     private int selected = 0;
@@ -57,15 +63,15 @@ public class MainActivity extends Activity {
     private String prayerPosition = "top";
 
     // Theme & Font Scale
-    private String themeId = "pure_black"; // pure_black, e_ink_light, matrix_green, amber_crt, dark_navy
-    private float fontScale = 1.0f; // 0.85f, 1.0f, 1.2f, 1.4f
+    private String themeId = "pure_black";
+    private float fontScale = 1.0f;
 
     private int colorBg = Color.BLACK;
     private int colorText = Color.WHITE;
     private int colorSecondary = Color.LTGRAY;
     private int colorAccent = 0xFFFCD34D;
-    private int colorBox = 0xFF161616;
-    private int colorSelectBg = 0xFF333333;
+    private int colorBox = 0xFF141414;
+    private int colorSelectBg = 0xFF2A2A2A;
 
     private double currentLat = 30.0444;
     private double currentLng = 31.2357;
@@ -82,6 +88,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
+
+        SharedPreferences sp = getSharedPreferences("launcher", MODE_PRIVATE);
+        // If first run, launch Setup Wizard for permissions & full config
+        if (!sp.getBoolean("setup_completed", false)) {
+            Intent setup = new Intent(this, SetupWizardActivity.class);
+            startActivity(setup);
+            finish();
+            return;
+        }
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -128,10 +143,10 @@ public class MainActivity extends Activity {
         if ("e_ink_light".equals(themeId)) {
             colorBg = Color.WHITE;
             colorText = Color.BLACK;
-            colorSecondary = 0xFF444444;
+            colorSecondary = 0xFF555555;
             colorAccent = 0xFF000000;
-            colorBox = 0xFFEEEEEE;
-            colorSelectBg = 0xFFDDDDDD;
+            colorBox = 0xFFF0F0F0;
+            colorSelectBg = 0xFFE0E0E0;
         } else if ("matrix_green".equals(themeId)) {
             colorBg = 0xFF050F05;
             colorText = 0xFF4ADE80;
@@ -151,52 +166,71 @@ public class MainActivity extends Activity {
             colorText = 0xFFE2E8F0;
             colorSecondary = 0xFF94A3B8;
             colorAccent = 0xFF38BDF8;
-            colorBox = 0xFF161E2E;
+            colorBox = 0xFF131D31;
             colorSelectBg = 0xFF1E293B;
         } else {
-            // pure_black
+            // pure_black (default)
             colorBg = Color.BLACK;
             colorText = Color.WHITE;
-            colorSecondary = Color.LTGRAY;
+            colorSecondary = 0xFFA1A1AA;
             colorAccent = 0xFFFCD34D;
-            colorBox = 0xFF161616;
-            colorSelectBg = 0xFF333333;
+            colorBox = 0xFF141414;
+            colorSelectBg = 0xFF27272A;
         }
 
         if (rootLayout != null) rootLayout.setBackgroundColor(colorBg);
+        if (userBadgeView != null) userBadgeView.setTextColor(colorAccent);
+        if (focusBadgeView != null) focusBadgeView.setTextColor(colorSecondary);
         if (dateView != null) {
             dateView.setTextColor(colorText);
-            dateView.setTextSize((int)(20 * fontScale));
+            dateView.setTextSize((int)(18 * fontScale));
         }
         if (timeView != null) {
             timeView.setTextColor(colorText);
-            timeView.setTextSize((int)(38 * fontScale));
+            timeView.setTextSize((int)(36 * fontScale));
         }
         if (batteryView != null) {
             batteryView.setTextColor(colorSecondary);
-            batteryView.setTextSize((int)(12 * fontScale));
+            batteryView.setTextSize((int)(11 * fontScale));
         }
-        if (prayerWidgetView != null) {
-            prayerWidgetView.setTextColor(colorAccent);
-            prayerWidgetView.setTextSize((int)(12 * fontScale));
+        if (prayerBox != null) applyCardBg(prayerBox, colorBox);
+        if (prayerNextView != null) {
+            prayerNextView.setTextColor(colorAccent);
+            prayerNextView.setTextSize((int)(11 * fontScale));
         }
-        if (countdownBox != null) countdownBox.setBackgroundColor(colorBox);
+        if (prayerScheduleView != null) {
+            prayerScheduleView.setTextColor(colorSecondary);
+            prayerScheduleView.setTextSize((int)(10 * fontScale));
+        }
+        if (countdownBox != null) applyCardBg(countdownBox, colorBox);
         if (countdownTitleView != null) {
             countdownTitleView.setTextColor(colorAccent);
-            countdownTitleView.setTextSize((int)(13 * fontScale));
+            countdownTitleView.setTextSize((int)(12 * fontScale));
         }
         if (countdownDaysView != null) {
             countdownDaysView.setTextColor(colorText);
-            countdownDaysView.setTextSize((int)(15 * fontScale));
+            countdownDaysView.setTextSize((int)(14 * fontScale));
         }
         if (countdownProgressView != null) {
             countdownProgressView.setTextColor(colorSecondary);
-            countdownProgressView.setTextSize((int)(12 * fontScale));
+            countdownProgressView.setTextSize((int)(11 * fontScale));
+        }
+        if (countdownBarView != null) {
+            countdownBarView.setTextColor(colorAccent);
+            countdownBarView.setTextSize((int)(10 * fontScale));
         }
         if (hintView != null) {
             hintView.setTextColor(colorSecondary);
-            hintView.setTextSize((int)(11 * fontScale));
+            hintView.setTextSize((int)(10 * fontScale));
         }
+    }
+
+    private void applyCardBg(LinearLayout box, int bgCol) {
+        GradientDrawable gd = new GradientDrawable();
+        gd.setColor(bgCol);
+        gd.setCornerRadius(dp(6));
+        gd.setStroke(dp(1), 0x33888888);
+        box.setBackground(gd);
     }
 
     private void hideSystemBars() {
@@ -229,63 +263,96 @@ public class MainActivity extends Activity {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         int widthDp = (int) (dm.widthPixels / dm.density);
         int heightDp = (int) (dm.heightPixels / dm.density);
-        boolean isSmallScreen = (widthDp <= 360 || heightDp <= 600); // 2.8" & 3.0" devices (Qin F21/Cat S22/Jelly 2)
+        boolean isSmallScreen = (widthDp <= 360 || heightDp <= 600);
 
         rootLayout = new LinearLayout(this);
         rootLayout.setOrientation(LinearLayout.VERTICAL);
         rootLayout.setBackgroundColor(colorBg);
 
-        int padX = isSmallScreen ? dp(12) : dp(22);
-        int padY = isSmallScreen ? dp(12) : dp(24);
-        rootLayout.setPadding(padX, padY, padX, padX);
+        int padX = isSmallScreen ? dp(10) : dp(16);
+        int padY = isSmallScreen ? dp(8) : dp(16);
+        rootLayout.setPadding(padX, padY, padX, padY);
 
-        int baseDate = isSmallScreen ? 16 : 20;
-        int baseTime = isSmallScreen ? 30 : 38;
-        int baseBat = isSmallScreen ? 11 : 12;
+        // Header: User avatar badge + Focus Mode badge
+        LinearLayout topHeaderRow = new LinearLayout(this);
+        topHeaderRow.setOrientation(LinearLayout.HORIZONTAL);
+        topHeaderRow.setGravity(Gravity.CENTER_VERTICAL);
 
-        // Header: Date, Time, Battery
-        dateView = text(baseDate, colorText, Typeface.MONOSPACE);
-        timeView = text(baseTime, colorText, Typeface.MONOSPACE);
-        batteryView = text(baseBat, colorSecondary, Typeface.MONOSPACE);
+        userBadgeView = text(isSmallScreen ? 11 : 12, colorAccent, Typeface.DEFAULT_BOLD);
+        SharedPreferences sp = getSharedPreferences("launcher", MODE_PRIVATE);
+        userBadgeView.setText("👤 " + sp.getString("userName", "أحمد غنيمي"));
+        topHeaderRow.addView(userBadgeView);
+
+        TextView spacer = new TextView(this);
+        LinearLayout.LayoutParams spLp = new LinearLayout.LayoutParams(0, 1, 1.0f);
+        spacer.setLayoutParams(spLp);
+        topHeaderRow.addView(spacer);
+
+        focusBadgeView = text(isSmallScreen ? 9 : 10, colorSecondary, Typeface.MONOSPACE);
+        focusBadgeView.setText("🔒 وضع التركيز");
+        topHeaderRow.addView(focusBadgeView);
+        rootLayout.addView(topHeaderRow);
+
+        // Date, Clock, Battery
+        dateView = text(isSmallScreen ? 14 : 17, colorText, Typeface.DEFAULT);
+        dateView.setPadding(0, dp(4), 0, 0);
         rootLayout.addView(dateView);
+
+        timeView = text(isSmallScreen ? 32 : 40, colorText, Typeface.MONOSPACE);
+        timeView.setTypeface(Typeface.create(Typeface.MONOSPACE, Typeface.BOLD));
         rootLayout.addView(timeView);
+
+        batteryView = text(isSmallScreen ? 10 : 11, colorSecondary, Typeface.MONOSPACE);
+        batteryView.setPadding(0, 0, 0, dp(6));
         rootLayout.addView(batteryView);
 
-        // Prayer Times Banner
-        prayerWidgetView = text(isSmallScreen ? 10 : 12, colorAccent, Typeface.MONOSPACE);
-        prayerWidgetView.setPadding(0, dp(4), 0, dp(2));
+        // 1. Prayer Times Box
+        prayerBox = new LinearLayout(this);
+        prayerBox.setOrientation(LinearLayout.VERTICAL);
+        applyCardBg(prayerBox, colorBox);
+        prayerBox.setPadding(dp(10), dp(6), dp(10), dp(6));
+        LinearLayout.LayoutParams prParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        prParams.setMargins(0, dp(4), 0, dp(6));
+        prayerBox.setLayoutParams(prParams);
 
-        // Vacation & Level Box
+        prayerNextView = text(isSmallScreen ? 10 : 12, colorAccent, Typeface.DEFAULT_BOLD);
+        prayerScheduleView = text(isSmallScreen ? 9 : 10, colorSecondary, Typeface.MONOSPACE);
+        prayerBox.addView(prayerNextView);
+        prayerBox.addView(prayerScheduleView);
+
+        // 2. Vacation & Duty Cycle Box
         countdownBox = new LinearLayout(this);
         countdownBox.setOrientation(LinearLayout.VERTICAL);
-        countdownBox.setBackgroundColor(colorBox);
-        int boxPadX = isSmallScreen ? dp(8) : dp(12);
-        int boxPadY = isSmallScreen ? dp(6) : dp(9);
-        countdownBox.setPadding(boxPadX, boxPadY, boxPadX, boxPadY);
+        applyCardBg(countdownBox, colorBox);
+        countdownBox.setPadding(dp(10), dp(8), dp(10), dp(8));
         LinearLayout.LayoutParams boxParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        boxParams.setMargins(0, isSmallScreen ? dp(4) : dp(8), 0, isSmallScreen ? dp(6) : dp(12));
+        boxParams.setMargins(0, dp(4), 0, dp(8));
         countdownBox.setLayoutParams(boxParams);
 
-        countdownTitleView = text(isSmallScreen ? 11 : 13, colorAccent, Typeface.MONOSPACE);
-        countdownDaysView = text(isSmallScreen ? 13 : 15, colorText, Typeface.MONOSPACE);
-        countdownProgressView = text(isSmallScreen ? 10 : 12, colorSecondary, Typeface.MONOSPACE);
+        countdownTitleView = text(isSmallScreen ? 11 : 12, colorAccent, Typeface.DEFAULT_BOLD);
+        countdownDaysView = text(isSmallScreen ? 12 : 14, colorText, Typeface.DEFAULT_BOLD);
+        countdownProgressView = text(isSmallScreen ? 10 : 11, colorSecondary, Typeface.DEFAULT);
+        countdownBarView = text(isSmallScreen ? 9 : 10, colorAccent, Typeface.MONOSPACE);
         countdownBox.addView(countdownTitleView);
         countdownBox.addView(countdownDaysView);
         countdownBox.addView(countdownProgressView);
+        countdownBox.addView(countdownBarView);
 
-        // Apps list container
+        // 3. Apps list container
         listBox = new LinearLayout(this);
         listBox.setOrientation(LinearLayout.VERTICAL);
 
-        // Hint footer
-        hintView = text(isSmallScreen ? 9 : 11, colorSecondary, Typeface.MONOSPACE);
-        hintView.setGravity(Gravity.BOTTOM);
+        // 4. Hint footer
+        hintView = text(isSmallScreen ? 9 : 10, colorSecondary, Typeface.MONOSPACE);
+        hintView.setGravity(Gravity.CENTER);
+        hintView.setPadding(0, dp(10), 0, dp(6));
+        hintView.setText("💡 اضغط مرتين على زر خفض الصوت لفك/قفل اللمس | اضغط مطولاً للإعدادات");
 
         reorderWidgets();
 
-        // Wrap in ScrollView without scrollbars for zero clipping on 2.8" and 3" screens
-        android.widget.ScrollView outerScroll = new android.widget.ScrollView(this);
+        ScrollView outerScroll = new ScrollView(this);
         outerScroll.setVerticalScrollBarEnabled(false);
         outerScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
         outerScroll.setFillViewport(true);
@@ -297,26 +364,25 @@ public class MainActivity extends Activity {
     }
 
     private void reorderWidgets() {
-        rootLayout.removeView(prayerWidgetView);
+        rootLayout.removeView(prayerBox);
         rootLayout.removeView(countdownBox);
         rootLayout.removeView(listBox);
         rootLayout.removeView(hintView);
 
-        if ("top".equals(prayerPosition)) rootLayout.addView(prayerWidgetView);
+        if ("top".equals(prayerPosition)) rootLayout.addView(prayerBox);
         if ("top".equals(vacationPosition)) rootLayout.addView(countdownBox);
 
         rootLayout.addView(listBox);
 
-        if ("bottom".equals(prayerPosition)) rootLayout.addView(prayerWidgetView);
+        if ("bottom".equals(prayerPosition)) rootLayout.addView(prayerBox);
         if ("bottom".equals(vacationPosition)) rootLayout.addView(countdownBox);
 
-        rootLayout.addView(hintView, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f));
+        rootLayout.addView(hintView);
     }
 
-    private TextView text(int sp, int color, Typeface tf) {
+    private TextView text(int sizeSp, int color, Typeface tf) {
         TextView t = new TextView(this);
-        t.setTextSize((int)(sp * fontScale));
+        t.setTextSize((int)(sizeSp * fontScale));
         t.setTextColor(color);
         t.setTypeface(tf);
         return t;
@@ -328,12 +394,13 @@ public class MainActivity extends Activity {
 
     private void updateHeader() {
         Date now = new Date();
-        dateView.setText("D: " + new SimpleDateFormat("dd MMM", Locale.ENGLISH).format(now));
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE d MMMM", new Locale("ar"));
+        dateView.setText(dayFormat.format(now));
 
         if ("12h".equals(timeFormat)) {
-            timeView.setText("T: " + new SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(now));
+            timeView.setText(new SimpleDateFormat("hh:mm a", Locale.ENGLISH).format(now));
         } else {
-            timeView.setText("T: " + new SimpleDateFormat("HH:mm", Locale.ENGLISH).format(now));
+            timeView.setText(new SimpleDateFormat("HH:mm", Locale.ENGLISH).format(now));
         }
 
         Intent bat = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -341,7 +408,7 @@ public class MainActivity extends Activity {
             int level = bat.getIntExtra("level", -1);
             int scale = bat.getIntExtra("scale", 100);
             if (level >= 0 && scale > 0) {
-                batteryView.setText("B: " + (level * 100 / scale) + "%");
+                batteryView.setText("🔋 " + (level * 100 / scale) + "% • البطارية");
             }
         }
     }
@@ -350,15 +417,16 @@ public class MainActivity extends Activity {
         SharedPreferences sp = getSharedPreferences("launcher", MODE_PRIVATE);
         boolean showPrayer = sp.getBoolean("showPrayerTimes", true);
         if (!showPrayer) {
-            prayerWidgetView.setVisibility(View.GONE);
+            prayerBox.setVisibility(View.GONE);
             return;
         }
-        prayerWidgetView.setVisibility(View.VISIBLE);
+        prayerBox.setVisibility(View.VISIBLE);
 
         PrayerCalculator.PrayerResult res = PrayerCalculator.calculate(currentLat, currentLng, 2.0);
         int h = res.remainingMinutes / 60;
         int m = res.remainingMinutes % 60;
-        prayerWidgetView.setText("🕌 الصلاة: " + res.nextPrayerName + " (باقي " + (h > 0 ? h + " س و" : "") + m + " د)");
+        prayerNextView.setText("🕌 الصلاة القادمة: " + res.nextPrayerName + " (باقي " + (h > 0 ? h + " س و" : "") + m + " د)");
+        prayerScheduleView.setText("الفجر " + res.fajr + " | الظهر " + res.dhuhr + " | العصر " + res.asr + " | المغرب " + res.maghrib + " | العشاء " + res.isha);
     }
 
     private void updateCountdown() {
@@ -383,9 +451,19 @@ public class MainActivity extends Activity {
         if (daysRemaining <= 0) {
             countdownDaysView.setText("🎉 مبروك يا أحمد! بدأت إجازة الـ " + vacationDays + " أيام! (ترقية جديدة ↑)");
             countdownProgressView.setText("تم إكمال دورة الـ " + dutyDays + " يوم خدمة بنجاح!");
+            countdownBarView.setText("[■■■■■■■■■■■■■■■■■■■■] 100%");
         } else {
-            countdownDaysView.setText("⚔ فاضل: " + daysRemaining + " يوم وتنزل إجازة الـ " + vacationDays + " أيام");
-            countdownProgressView.setText("الخدمة: " + daysServed + "/" + dutyDays + " يوم (" + percent + "%)");
+            countdownDaysView.setText("⚔ فاضل: " + daysRemaining + " يوم وتنزل إجازة الـ " + vacationDays + " أيام!");
+            countdownProgressView.setText("الخدمة: " + daysServed + " من أصل " + dutyDays + " يوم (" + percent + "%)");
+
+            // ASCII Visual Progress Bar
+            int totalBlocks = 18;
+            int filled = Math.min(totalBlocks, (daysServed * totalBlocks) / dutyDays);
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0; i < filled; i++) sb.append("■");
+            for (int i = filled; i < totalBlocks; i++) sb.append("□");
+            sb.append("] ").append(percent).append("%");
+            countdownBarView.setText(sb.toString());
         }
     }
 
@@ -394,25 +472,56 @@ public class MainActivity extends Activity {
         rows.clear();
         pkgs.clear();
 
-        addAppRow("phone_internal", "الهاتف والأسماء");
-        addAppRow("music_internal", "مشغل الموسيقى");
+        // 1. Built-in Phone app
+        addAppRow("phone_internal", "📞 الهاتف والأسماء");
 
+        // 2. Built-in Music Player
+        addAppRow("music_internal", "🎵 مشغل الموسيقى");
+
+        // 3. User configured apps
         PackageManager pm = getPackageManager();
         for (String p : saved.split(",")) {
-            if (p.length() == 0 || p.equals("phone_internal") || p.equals("music_internal")) continue;
+            if (p.length() == 0 || p.equals("phone_internal") || p.equals("music_internal") || p.equals("settings_internal")) continue;
             try {
                 String label = pm.getApplicationLabel(pm.getApplicationInfo(p, 0)).toString();
                 addAppRow(p, label);
             } catch (PackageManager.NameNotFoundException ignored) {}
         }
+
+        // 4. Settings ALWAYS visible and accessible!
+        addAppRow("settings_internal", "⚙️ الإعدادات والتحكم");
+
         if (selected >= rows.size()) selected = 0;
         refreshSelection();
     }
 
     private void addAppRow(String pkg, String label) {
-        TextView row = text(18, colorText, Typeface.MONOSPACE);
-        row.setPadding(dp(8), dp(7), dp(8), dp(7));
+        final TextView row = text(15, colorText, Typeface.DEFAULT);
+        row.setPadding(dp(12), dp(8), dp(12), dp(8));
         row.setTag(label);
+
+        // Click when touch lock is off
+        row.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int idx = rows.indexOf(v);
+                if (idx != -1) {
+                    selected = idx;
+                    refreshSelection();
+                    openSelected();
+                }
+            }
+        });
+
+        // Long click to open settings
+        row.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+                return true;
+            }
+        });
+
         listBox.addView(row);
         rows.add(row);
         pkgs.add(pkg);
@@ -423,13 +532,19 @@ public class MainActivity extends Activity {
             TextView r = rows.get(i);
             String label = (String) r.getTag();
             if (i == selected) {
-                r.setText("> " + label);
-                r.setBackgroundColor(colorSelectBg);
+                r.setText("► " + label);
+                GradientDrawable selBg = new GradientDrawable();
+                selBg.setColor(colorSelectBg);
+                selBg.setCornerRadius(dp(6));
+                selBg.setStroke(dp(1), colorAccent);
+                r.setBackground(selBg);
                 r.setTextColor(colorText);
+                r.setTypeface(Typeface.DEFAULT_BOLD);
             } else {
-                r.setText("  " + label);
+                r.setText("   " + label);
                 r.setBackgroundColor(Color.TRANSPARENT);
                 r.setTextColor(colorText);
+                r.setTypeface(Typeface.DEFAULT);
             }
         }
     }
@@ -451,6 +566,10 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, SimpleMusicActivity.class));
             return;
         }
+        if ("settings_internal".equals(pkg)) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return;
+        }
         Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
         if (i != null) startActivity(i);
     }
@@ -458,7 +577,7 @@ public class MainActivity extends Activity {
     private void toggleTouchLock() {
         touchLock = !touchLock;
         getSharedPreferences("launcher", MODE_PRIVATE).edit().putBoolean("touchLock", touchLock).apply();
-        Toast.makeText(this, touchLock ? "تم قفل اللمس 🔒" : "تم فتح اللمس 🔓", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, touchLock ? "تم قفل شاشة اللمس 🔒" : "تم فتح شاشة اللمس 🔓", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -471,8 +590,8 @@ public class MainActivity extends Activity {
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         long now = System.currentTimeMillis();
 
-        // Check for 3 quick hits on ANY key if user selected that mode
-        if ("any_key_triple".equals(lockToggleMode)) {
+        // 1. Triple any key shortcut
+        if ("triple_any".equals(lockToggleMode)) {
             if (now - lastAnyKeyPress < 450) {
                 anyKeyHitCount++;
                 if (anyKeyHitCount >= 2) {
@@ -481,66 +600,56 @@ public class MainActivity extends Activity {
                     return true;
                 }
             } else {
-                anyKeyHitCount = 1;
+                anyKeyHitCount = 0;
             }
             lastAnyKeyPress = now;
         }
 
-        if (keyCode == keyNext) {
-            if ("double_vol_down".equals(lockToggleMode) && (now - lastKeyNextPress < 450)) {
+        // 2. Double-click Back shortcut
+        if (keyCode == KeyEvent.KEYCODE_BACK && "double_back".equals(lockToggleMode)) {
+            if (now - lastBackPress < 450) {
                 toggleTouchLock();
-                return true;
-            }
-            lastKeyNextPress = now;
-            if (event.getRepeatCount() == 0) event.startTracking();
-            return true;
-        }
-
-        if (keyCode == keyOpen) {
-            if ("double_vol_up".equals(lockToggleMode) && (now - lastKeyOpenPress < 450)) {
-                toggleTouchLock();
-                return true;
-            }
-            lastKeyOpenPress = now;
-            if (event.getRepeatCount() == 0) event.startTracking();
-            return true;
-        }
-
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if ("double_back".equals(lockToggleMode) && (now - lastBackPress < 450)) {
-                toggleTouchLock();
+                lastBackPress = 0;
                 return true;
             }
             lastBackPress = now;
             return true;
         }
 
-        return super.onKeyDown(keyCode, event);
-    }
+        // 3. Double-click Volume Down shortcut
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && "double_vol_down".equals(lockToggleMode)) {
+            if (now - lastKeyNextPress < 450) {
+                toggleTouchLock();
+                lastKeyNextPress = 0;
+                return true;
+            }
+            lastKeyNextPress = now;
+        }
 
-    @Override
-    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
-        if ("long_vol_up".equals(lockToggleMode) && keyCode == keyOpen) {
-            toggleTouchLock();
-            return true;
+        // 4. Double-click Volume Up shortcut
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP && "double_vol_up".equals(lockToggleMode)) {
+            if (now - lastKeyOpenPress < 450) {
+                toggleTouchLock();
+                lastKeyOpenPress = 0;
+                return true;
+            }
+            lastKeyOpenPress = now;
         }
-        if (keyCode == keyNext) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return true;
-        }
-        return super.onKeyLongPress(keyCode, event);
-    }
 
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (keyCode == keyNext) {
-            if (!event.isCanceled()) move(1);
+        // D-Pad and hardware keys navigation
+        if (keyCode == keyNext || keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+            move(1);
             return true;
         }
-        if (keyCode == keyOpen) {
+        if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+            move(-1);
+            return true;
+        }
+        if (keyCode == keyOpen || keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
             openSelected();
             return true;
         }
-        return super.onKeyUp(keyCode, event);
+
+        return super.onKeyDown(keyCode, event);
     }
 }

@@ -64,5 +64,12 @@
             android:exported="false"
             android:label="Launcher Settings"
             android:theme="@android:style/Theme.Holo" />
+
+        <!-- Setup Wizard (First Launch & Permissions) -->
+        <activity
+            android:name=".SetupWizardActivity"
+            android:exported="true"
+            android:label="Launcher Setup"
+            android:theme="@android:style/Theme.Holo.NoActionBar.Fullscreen" />
     </application>
 </manifest>
